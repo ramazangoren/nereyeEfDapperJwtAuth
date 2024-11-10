@@ -3,6 +3,7 @@ using System.Data;
 using System.Threading.Tasks;
 using api.DTOs.RestaurantDto;
 using api.Models;
+using api.Services;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +14,12 @@ namespace api.Controllers
     public class RestaurantController : ControllerBase
     {
         private readonly IDbConnection _dbConnection;
+        private readonly IOpenCloseService _openCloseService;
 
-        public RestaurantController(IDbConnection dbConnection)
+        public RestaurantController(IDbConnection dbConnection, IOpenCloseService openCloseService)
         {
             _dbConnection = dbConnection;
+            _openCloseService = openCloseService;
         }
 
         [HttpGet]
@@ -25,6 +28,16 @@ namespace api.Controllers
             var restaurants = await _dbConnection.QueryAsync<Restaurant>(
                 "SELECT * FROM Restaurants WHERE IsActive = 1"
             );
+
+            // Check open status for each restaurant
+            foreach (var restaurant in restaurants)
+            {
+                var status = await _openCloseService.CheckIfOpenOrClosed(restaurant.RestaurantId);
+                restaurant.OpenStatus = status;
+                Console.WriteLine(status);
+                Console.WriteLine(restaurant.OpenStatus);
+            }
+
             return Ok(restaurants);
         }
 
@@ -32,8 +45,19 @@ namespace api.Controllers
         public async Task<ActionResult<Restaurant>> GetSingleRestaurant(int RestaurantId)
         {
             var sql = "SELECT * FROM Restaurants WHERE RestaurantId = " + RestaurantId;
-            var restaurant = await _dbConnection.QueryFirstOrDefaultAsync<Restaurant>(sql);
-            return restaurant == null ? NotFound() : Ok(restaurant);
+            var restaurant = await _dbConnection.QueryFirstOrDefaultAsync<Restaurant>(
+                sql
+            );
+            if (restaurant == null)
+            {
+                return NotFound();
+            }
+
+            // Check open status for the single restaurant
+            var status = await _openCloseService.CheckIfOpenOrClosed(restaurant.RestaurantId);
+            restaurant.OpenStatus = status;
+
+            return Ok(restaurant);
         }
 
         [HttpPost("CreateRestaurant/{userId}")]
@@ -280,7 +304,7 @@ namespace api.Controllers
                     restaurantDto.SaturdayCloses,
                     restaurantDto.SundayOpens,
                     restaurantDto.SundayCloses,
-                    UpdatedAt =DateTime.Now,
+                    UpdatedAt = DateTime.Now,
                     restaurantDto.IsActive,
                     RestaurantId // Add RestaurantId here
                     ,

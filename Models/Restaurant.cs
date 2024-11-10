@@ -14,7 +14,7 @@ namespace api.Models
         [ForeignKey("User")]
         public int UserId { get; set; }
 
-        [Required]
+        // [Required]
         [StringLength(255)]
         [Column(TypeName = "nvarchar(255)")]
         public string RestaurantName { get; set; } = "";
@@ -36,7 +36,7 @@ namespace api.Models
         [Column(TypeName = "nvarchar(100)")]
         public string Longitude { get; set; } = "";
 
-        [Required]
+        // [Required]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
         public string EstablishmentType { get; set; } = "";
@@ -91,58 +91,44 @@ namespace api.Models
 
         // Opening and closing times for each day
         [Required]
-        [StringLength(10)]
-        public string MondayOpens { get; set; } = "";
+        public TimeSpan MondayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string MondayCloses { get; set; } = "";
+        public TimeSpan MondayCloses { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string TuesdayOpens { get; set; } = "";
+        public TimeSpan TuesdayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string TuesdayCloses { get; set; } = "";
+        public TimeSpan TuesdayCloses { get; set; } = TimeSpan.Zero;
 
-        [StringLength(10)]
-        public string WednesdayOpens { get; set; } = "";
+        public TimeSpan WednesdayOpens { get; set; } = TimeSpan.Zero;
 
-        [StringLength(10)]
-        public string WednesdayCloses { get; set; } = "";
+        public TimeSpan WednesdayCloses { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string ThursdayOpens { get; set; } = "";
+        public TimeSpan ThursdayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string ThursdayCloses { get; set; } = "";
+        public TimeSpan ThursdayCloses { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string FridayOpens { get; set; } = "";
+        public TimeSpan FridayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string FridayCloses { get; set; } = "";
+        public TimeSpan FridayCloses { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string SaturdayOpens { get; set; } = "";
+        public TimeSpan SaturdayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string SaturdayCloses { get; set; } = "";
+        public TimeSpan SaturdayCloses { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string SundayOpens { get; set; } = "";
+        public TimeSpan SundayOpens { get; set; } = TimeSpan.Zero;
 
         [Required]
-        [StringLength(10)]
-        public string SundayCloses { get; set; } = "";
+        public TimeSpan SundayCloses { get; set; } = TimeSpan.Zero;
 
         // Timestamp fields
         [DataType(DataType.DateTime)]
@@ -152,5 +138,6 @@ namespace api.Models
         public DateTime? UpdatedAt { get; set; } = DateTime.Now;
 
         public bool IsActive { get; set; } = true;
+        public bool? OpenStatus { get; set; }
     }
 }

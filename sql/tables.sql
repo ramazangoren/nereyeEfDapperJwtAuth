@@ -13,6 +13,68 @@ CREATE TABLE Users (
 
 
 -- Restaurant Table
+-- CREATE TABLE Restaurants (
+--     RestaurantId INT PRIMARY KEY IDENTITY(1,1),
+--     UserId INT FOREIGN KEY REFERENCES Users(UserId) ON DELETE CASCADE,
+--     RestaurantName NVARCHAR(255) NOT NULL,
+--     RestaurantCode INT,
+--     FullAddress NVARCHAR(255) NOT NULL,
+--     Latitude NVARCHAR(100) NOT NULL,
+--     Longitude NVARCHAR(100) NOT NULL,
+--     EstablishmentType NVARCHAR(100) NOT NULL,
+--     Phone NVARCHAR(20) NOT NULL,
+--     ExtraInfo NVARCHAR(MAX) NOT NULL,
+--     AboutUs NVARCHAR(MAX) NOT NULL,
+--     CreditCard BIT NOT NULL,
+--     Cash BIT NOT NULL,
+--     FoodCards BIT NOT NULL,
+--     AppleGooglePay BIT NOT NULL,
+--     OutdoorSitting BIT NOT NULL,
+--     PetsAllowed BIT NOT NULL,
+--     Alcohol BIT NOT NULL,
+--     Parking BIT NOT NULL,
+--     OffersDelivery BIT NOT NULL,
+--     OffersTakeout BIT NOT NULL,
+--     GoodForGroups BIT NOT NULL,
+--     GoodForKids BIT NOT NULL,
+--     FullBar BIT NOT NULL,
+--     TakesReservation BIT NOT NULL,
+--     WaiterService BIT NOT NULL,
+--     SelfService BIT NOT NULL,
+--     HasTV BIT NOT NULL,
+--     FreeWifi BIT NOT NULL,
+--     StreetParking BIT NOT NULL,
+--     BeerAndWineOnly BIT NOT NULL,
+--     Italian BIT NOT NULL,
+--     Hookah BIT NOT NULL,
+--     Burger BIT NOT NULL,
+--     HotDogs BIT NOT NULL,
+--     FastFood BIT NOT NULL,
+--     Breakfast BIT NOT NULL,
+--     Doner BIT NOT NULL,
+--     HalalFood BIT NOT NULL,
+--     ImageUrls NVARCHAR(MAX) NOT NULL,
+--     MondayOpens NVARCHAR(10) NOT NULL,
+--     MondayCloses NVARCHAR(10) NOT NULL,
+--     TuesdayOpens NVARCHAR(10) NOT NULL,
+--     TuesdayCloses NVARCHAR(10) NOT NULL,
+--     WednesdayOpens NVARCHAR(10),
+--     WednesdayCloses NVARCHAR(10),
+--     ThursdayOpens NVARCHAR(10) NOT NULL,
+--     ThursdayCloses NVARCHAR(10) NOT NULL,
+--     FridayOpens NVARCHAR(10) NOT NULL,
+--     FridayCloses NVARCHAR(10) NOT NULL,
+--     SaturdayOpens NVARCHAR(10) NOT NULL,
+--     SaturdayCloses NVARCHAR(10) NOT NULL,
+--     SundayOpens NVARCHAR(10) NOT NULL,
+--     SundayCloses NVARCHAR(10) NOT NULL,
+--     CreatedAt DATETIME DEFAULT GETDATE(),
+--     UpdatedAt DATETIME DEFAULT GETDATE(),
+--     INDEX IX_UserId (UserId)
+-- );
+
+
+--updated Restaurant table
 CREATE TABLE Restaurants (
     RestaurantId INT PRIMARY KEY IDENTITY(1,1),
     UserId INT FOREIGN KEY REFERENCES Users(UserId) ON DELETE CASCADE,
@@ -54,24 +116,25 @@ CREATE TABLE Restaurants (
     Doner BIT NOT NULL,
     HalalFood BIT NOT NULL,
     ImageUrls NVARCHAR(MAX) NOT NULL,
-    MondayOpens NVARCHAR(10) NOT NULL,
-    MondayCloses NVARCHAR(10) NOT NULL,
-    TuesdayOpens NVARCHAR(10) NOT NULL,
-    TuesdayCloses NVARCHAR(10) NOT NULL,
-    WednesdayOpens NVARCHAR(10),
-    WednesdayCloses NVARCHAR(10),
-    ThursdayOpens NVARCHAR(10) NOT NULL,
-    ThursdayCloses NVARCHAR(10) NOT NULL,
-    FridayOpens NVARCHAR(10) NOT NULL,
-    FridayCloses NVARCHAR(10) NOT NULL,
-    SaturdayOpens NVARCHAR(10) NOT NULL,
-    SaturdayCloses NVARCHAR(10) NOT NULL,
-    SundayOpens NVARCHAR(10) NOT NULL,
-    SundayCloses NVARCHAR(10) NOT NULL,
+    MondayOpens TIME NOT NULL,
+    MondayCloses TIME NOT NULL,
+    TuesdayOpens TIME NOT NULL,
+    TuesdayCloses TIME NOT NULL,
+    WednesdayOpens TIME,
+    WednesdayCloses TIME,
+    ThursdayOpens TIME NOT NULL,
+    ThursdayCloses TIME NOT NULL,
+    FridayOpens TIME NOT NULL,
+    FridayCloses TIME NOT NULL,
+    SaturdayOpens TIME NOT NULL,
+    SaturdayCloses TIME NOT NULL,
+    SundayOpens TIME NOT NULL,
+    SundayCloses TIME NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME DEFAULT GETDATE(),
     INDEX IX_UserId (UserId)
 );
+
 
 -- Product Table
 CREATE TABLE Products (
@@ -127,6 +190,47 @@ CREATE TABLE Favorites (
 );
 
 
+-- search query sample 
+SELECT 
+    r.RestaurantId,
+    r.RestaurantName,
+    r.FullAddress,
+    r.Phone,
+    r.EstablishmentType,
+    p.ProductId,
+    p.ProductName,
+    p.ProductPrice,
+    p.ProductExplanation
+FROM 
+    Restaurants r
+LEFT JOIN 
+    Products p ON r.RestaurantId = p.RestaurantId
+WHERE 
+    r.RestaurantName LIKE '%YourSearchTerm%' OR
+    p.ProductName LIKE '%YourSearchTerm%';
 
--- The ON DELETE CASCADE clause is added to foreign key constraints to automatically delete related 
--- records in child tables when a record in the parent table is deleted.
+
+
+
+
+-- Search for restaurants and products by name
+DECLARE @SearchTerm NVARCHAR(255) = 'Your Search Term'; -- Replace with your search term
+
+SELECT 
+    r.RestaurantId,
+    r.RestaurantName,
+    r.FullAddress,
+    r.Phone,
+    r.EstablishmentType,
+    p.ProductId,
+    p.ProductName,
+    p.ProductPrice,
+    p.ProductExplanation
+FROM 
+    Restaurants r
+LEFT JOIN 
+    Products p ON r.RestaurantId = p.RestaurantId
+WHERE 
+    r.RestaurantName LIKE '%' + @SearchTerm + '%' 
+    OR p.ProductName LIKE '%' + @SearchTerm + '%';
+

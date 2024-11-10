@@ -51,10 +51,10 @@ namespace api.controllers
                 return BadRequest("All fields are required.");
             }
 
-            if (userDto.UserPassword.Length < 8)
-            {
-                return BadRequest("Password must be at least 8 characters long.");
-            }
+            // if (userDto.UserPassword.Length < 8)
+            // {
+            //     return BadRequest("Password must be at least 8 characters long.");
+            // }
 
             userDto.UserPassword = HashPassword(userDto.UserPassword);
 
@@ -62,16 +62,19 @@ namespace api.controllers
                 @"INSERT INTO Users (UserName, LastName, Email, UserPassword, Avatar)
                   VALUES (@UserName, @LastName, @Email, @UserPassword, @Avatar);
                   SELECT CAST(SCOPE_IDENTITY() as int);";
-
-            try
-            {
+                
                 await _dbConnection.ExecuteAsync(query, userDto);
                 return Ok(userDto);
-            }
-            catch
-            {
-                return StatusCode(500, "An error occurred while creating the user.");
-            }
+
+            // try
+            // {
+            //     await _dbConnection.ExecuteAsync(query, userDto);
+            //     return Ok(userDto);
+            // }
+            // catch
+            // {
+            //     return StatusCode(500, "An error occurred while creating the user.");
+            // }
         }
 
         [HttpPut("{UserId}")]

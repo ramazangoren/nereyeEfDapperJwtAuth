@@ -93,5 +93,6 @@ namespace api.controllers
 
             return Ok("Deleted from favorites");
         }
+    
     }
 }

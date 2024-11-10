@@ -180,5 +180,6 @@ namespace api.controllers
 
             return rowsAffected > 0 ? Ok("product been deleted") : NotFound();
         }
+    
     }
 }
