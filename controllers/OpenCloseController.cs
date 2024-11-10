@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using api.DTOs.RestaurantDto;
+using api.Helpers;
 using api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,27 +11,40 @@ namespace api.Controllers
     public class OpenCloseController : ControllerBase
     {
         private readonly IOpenCloseService _openCloseService;
+        private readonly ILogger<OpenCloseController> _logger;
 
-        public OpenCloseController(IOpenCloseService openCloseService)
+        public OpenCloseController(
+            IOpenCloseService openCloseService,
+            ILogger<OpenCloseController> logger
+        )
         {
             _openCloseService = openCloseService;
+            _logger = logger;
         }
 
         [HttpGet("CheckIfOpenOrClosed/{restaurantId}")]
-        public async Task<ActionResult<string>> GetOpenStatus(int restaurantId)
+        public ActionResult<string> GetOpenStatus(int restaurantId)
         {
-            // Use the service to check if the restaurant is open or closed
-            var status = await _openCloseService.CheckIfOpenOrClosed(restaurantId);
-            // if (status == true)
-            // {
-            //     return Ok("open");
-            // }
-            // else
-            // {
-            //     return Ok("closed");
-            // }
+            try
+            {
+                // Use the service to check if the restaurant is open or closed
+                var status = _openCloseService.CheckIfOpenOrClosed(restaurantId);
+                // if (status == true)
+                // {
+                //     return Ok("open");
+                // }
+                // else
+                // {
+                //     return Ok("closed");
+                // }
 
-            return Ok(status);
+                return Ok(status);
+            }
+            catch (Exception ex)
+            {
+                // Handle the error using the ErrorHandler class
+                return ErrorHandler.HandleError(ex, "GetOpenStatus", _logger);
+            }
         }
     }
 }

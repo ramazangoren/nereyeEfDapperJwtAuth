@@ -7,6 +7,6 @@ namespace api.Services
 {
     public interface IOpenCloseService
     {
-        Task<bool?> CheckIfOpenOrClosed(int restaurantId); // Allow null to indicate not found
+        bool? CheckIfOpenOrClosed(int restaurantId); // Allow null to indicate not found
     }
 }

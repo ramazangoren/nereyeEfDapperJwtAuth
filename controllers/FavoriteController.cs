@@ -1,98 +1,122 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Data;
+using api.DTOs.ReviewsDto;
+using api.Helpers;
 using api.Models;
-using Dapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace api.controllers
 {
-    [Route("api/[controller]")]
+    [Authorize]
     [ApiController]
+    [Route("[controller]")]
     public class FavoriteController : ControllerBase
     {
-        private readonly IDbConnection _dbConnection;
+        private readonly NereyeDBContext _dapper;
+        private readonly ILogger<FavoriteController> _logger;
 
-        public FavoriteController(IDbConnection dbConnection)
+        public FavoriteController(IConfiguration config, ILogger<FavoriteController> logger)
         {
-            _dbConnection = dbConnection;
+            _dapper = new NereyeDBContext(config);
+            _logger = logger;
         }
 
-        [HttpGet("Favorites/{UserId:int}")]
-        public async Task<ActionResult<IEnumerable<object>>> GetFavorites(int UserId)
+        [HttpGet("Favorites")]
+        public ActionResult<IEnumerable<object>> GetFavorites()
         {
-            var favoritesWithRestaurantInfo = await _dbConnection.QueryAsync(
-                @"
+            try
+            {
+                string UserId = User.FindFirst("userId")?.Value + "";
+                string sql =
+                    @"
                 SELECT f.FavoriteId, f.RestaurantId, f.UserId, f.CreatedAt, r.RestaurantName, r.RestaurantCode
                 FROM Favorites f
                 JOIN Restaurants r ON f.RestaurantId = r.RestaurantId
-                WHERE f.UserId = @UserId;",
-                new { UserId }
-            );
+                WHERE f.UserId = " + UserId;
+                var favoritesWithRestaurantInfo = _dapper.LoadData<object>(sql);
 
-            return favoritesWithRestaurantInfo.Any()
-                ? Ok(favoritesWithRestaurantInfo)
-                : NotFound($"No favorites found for UserId: {UserId}");
-        }
-
-        // public async Task<ActionResult<AddFavoriteDto>> AddFavorite(int RestaurantId, int UserId)
-        // i could've used this above method for below function but i didnt use it because i have nothing in AddFavoriteDto
-        // im gon go delete it
-        [HttpPost("AddFavorite/{RestaurantId:int}/{UserId:int}")]
-        public async Task<ActionResult<string>> AddFavorite(int RestaurantId, int UserId)
-        {
-            // Check if the restaurant exists
-            var restaurant = await _dbConnection.QueryFirstOrDefaultAsync<Restaurant>(
-                "SELECT RestaurantId FROM Restaurants WHERE RestaurantId = @RestaurantId",
-                new { RestaurantId }
-            );
-
-            if (restaurant == null)
-                return NotFound($"Restaurant with ID {RestaurantId} not found.");
-
-            // Prepare and execute the insertion query
-            var favoriteQuery =
-                @"
-        INSERT INTO Favorites (RestaurantId, UserId, CreatedAt) 
-        VALUES (@RestaurantId, @UserId, @CreatedAt);";
-
-            var favoriteParameters = new
+                return favoritesWithRestaurantInfo.Any()
+                    ? Ok(favoritesWithRestaurantInfo)
+                    : NotFound($"No favorites found for UserId: {UserId}");
+            }
+            catch (Exception ex)
             {
-                RestaurantId,
-                UserId,
-                CreatedAt = DateTime.Now,
-            };
-
-            await _dbConnection.ExecuteAsync(favoriteQuery, favoriteParameters);
-
-            return CreatedAtAction(
-                nameof(AddFavorite),
-                new { RestaurantId, UserId },
-                "Added to favorites"
-            );
+                return ErrorHandler.HandleError(ex, "GetFavorites", _logger);
+            }
         }
 
-        [HttpDelete("DeleteFavorite/{UserId:int}/{FavoriteId:int}")]
-        public async Task<ActionResult<string>> DeleteFavorite(int FavoriteId, int UserId)
+        [HttpPost("AddFavorite/{RestaurantId:int}")]
+        public ActionResult<string> AddFavorite(int RestaurantId)
         {
-            var sql =
-                "SELECT COUNT(1) FROM Favorites WHERE FavoriteId = @FavoriteId AND UserId = @UserId";
-            var favoriteExists = await _dbConnection.QueryFirstOrDefaultAsync<int>(
-                sql,
-                new { FavoriteId, UserId }
-            );
+            try
+            {
+                string UserId = User.FindFirst("userId")?.Value + "";
+                var restaurantExistsQuery =
+                    "SELECT COUNT(1) FROM Restaurants WHERE RestaurantId = @RestaurantId";
+                int restaurantExists = _dapper.ExecuteSqlWithRowCount(
+                    restaurantExistsQuery,
+                    new { RestaurantId }
+                );
 
-            if (favoriteExists == 0)
-                return NotFound($"Favorite with ID {FavoriteId} for User ID {UserId} not found.");
+                if (restaurantExists == 0)
+                {
+                    return NotFound($"Restaurant with ID {RestaurantId} not found.");
+                }
+                var favoriteQuery =
+                    @"INSERT INTO Favorites (RestaurantId, UserId, CreatedAt) 
+                                VALUES (@RestaurantId, @UserId, @CreatedAt);";
 
-            var favoriteQuery =
-                @"DELETE FROM Favorites WHERE FavoriteId = @FavoriteId AND UserId = @UserId";
-            await _dbConnection.ExecuteAsync(favoriteQuery, new { FavoriteId, UserId });
+                var favoriteParameters = new
+                {
+                    RestaurantId,
+                    UserId,
+                    CreatedAt = DateTime.Now,
+                };
 
-            return Ok("Deleted from favorites");
+                bool result = _dapper.ExecuteSql(favoriteQuery, favoriteParameters);
+
+                return result ? Ok("Added to favorites") : BadRequest("could add it to favorites");
+            }
+            catch (Exception ex)
+            {
+                return ErrorHandler.HandleError(ex, "AddFavorite", _logger);
+            }
         }
-    
+
+        [HttpDelete("DeleteFavorite/{FavoriteId:int}")]
+        public ActionResult<string> DeleteFavorite(int FavoriteId)
+        {
+            try
+            {
+                string UserId = User.FindFirst("userId")?.Value + "";
+                var sql =
+                    "SELECT COUNT(1) FROM Favorites WHERE FavoriteId = @FavoriteId AND UserId = @UserId";
+                int favoriteExists = _dapper.ExecuteSqlWithRowCount(
+                    sql,
+                    new { FavoriteId, UserId }
+                );
+
+                if (favoriteExists == 0)
+                    return NotFound(
+                        $"Favorite with ID {FavoriteId} for User ID {UserId} not found."
+                    );
+
+                var favoriteQuery =
+                    @"DELETE FROM Favorites WHERE FavoriteId = @FavoriteId AND UserId = @UserId";
+                bool result = _dapper.ExecuteSql(favoriteQuery, new { FavoriteId, UserId });
+                return result
+                    ? Ok("Deleted from favorites")
+                    : BadRequest("could delete it from favorites");
+            }
+            catch (Exception ex)
+            {
+                return ErrorHandler.HandleError(ex, "DeleteFavorite", _logger);
+            }
+        }
     }
 }

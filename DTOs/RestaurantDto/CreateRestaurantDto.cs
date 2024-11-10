@@ -11,7 +11,7 @@ namespace api.DTOs.RestaurantDto
         [Column(TypeName = "nvarchar(255)")]
         public string RestaurantName { get; set; } = "";
 
-        public int? RestaurantCode { get; set; }
+        // public int? RestaurantCode { get; set; }
 
         [Required]
         [StringLength(255)]
@@ -135,7 +135,7 @@ namespace api.DTOs.RestaurantDto
         [Required]
         [StringLength(10)]
         public string SundayCloses { get; set; } = "";
-
-        public bool IsActive { get; set; } = true;
+        public bool Active { get; set; } = true;
     }
 }
+
